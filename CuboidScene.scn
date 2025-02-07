@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<Node name="root" dt="0.01" gravity="0 0 -9.81" bbox="-1 -1 -1 2 2 7">
+    <!-- Requerimientos de plugins -->
+    <RequiredPlugin name="Sofa.Component.SolidMechanics.FEM.Elastic"/>
+    <RequiredPlugin name="Sofa.Component.Mass"/>
+    <RequiredPlugin name="Sofa.Component.ODESolver.Backward"/>
+    <RequiredPlugin name="Sofa.Component.Visual"/>
+    <RequiredPlugin name="Sofa.Component.LinearSolver.Iterative"/>
+    <RequiredPlugin name="Sofa.Component.Topology.Container.Constant"/>
+    <RequiredPlugin name="Sofa.Component.Topology.Container.Dynamic"/>
+    <RequiredPlugin name="Sofa.Component.StateContainer"/>
+    <RequiredPlugin name="Sofa.Component.MechanicalLoad"/>
+    <RequiredPlugin name="Sofa.Component.Constraint.Lagrangian.Correction"/>
+    <RequiredPlugin name="Sofa.GL.Component.Rendering3D"/>
+    <RequiredPlugin name="Sofa.Component.Mapping.Linear"/>
+    
+    <!-- Configuración del bucle de animación y el solver -->
+    <DefaultAnimationLoop name="loop"/>
+    <EulerImplicitSolver name="odesolver" rayleighStiffness="0.1" rayleighMass="0.1"/>
+    <CGLinearSolver name="linear_solver" iterations="25" tolerance="1e-5" threshold="1e-5"/>
+    
+    <Node name="Cuboid" gravity="0 0 -9.81">
+        <!-- Definición de la topología del cuboide -->
+        <MeshTopology name="mesh">
+            <Vertices>
+                0 0 0; 1 0 0; 1 1 0; 0 1 0;
+                0 0 6; 1 0 6; 1 1 6; 0 1 6
+            </Vertices>
+            <Hexahedra>
+                0 1 2 3 4 5 6 7
+            </Hexahedra>
+        </MeshTopology>
+    
+        <MechanicalObject name="dofs" template="Vec3d" 
+                          position="0 0 0 1 0 0 1 1 0 0 1 0 0 0 6 1 0 6 1 1 6 0 1 6"/>
+    
+        <HexahedronSetTopologyContainer name="container" hexahedra="0 1 2 3 4 5 6 7"/>
+        <HexahedronSetTopologyModifier name="modifier"/>
+        <HexahedronSetGeometryAlgorithms template="Vec3d" name="geometry"/>
+    
+        <UniformMass name="mass" totalMass="1.0"/>
+        <HexahedronFEMForceField name="FEM" youngModulus="1000" poissonRatio="0.3" method="large"/>
+    
+        <FixedConstraint name="FixX0" indices="0 3 4 7"/>
+        <ConstantForceField name="Force" forces="0 0 -100" indices="1 2 5 6"/>
+    
+        <LinearSolverConstraintCorrection name="constraintCorrection" linearSolver="@../linear_solver"/>
+    
+        <!-- Definición de la malla visual -->
+        <Node name="VisualModel">
+            <TriangleSetTopology name="visualMesh">
+                <Vertices>
+                    0 0 0; 1 0 0; 1 1 0; 0 1 0;
+                    0 0 6; 1 0 6; 1 1 6; 0 1 6
+                </Vertices>
+                <Triangles>
+                    0 1 2; 0 2 3; 4 5 6; 4 6 7;
+                    0 1 5; 0 5 4; 1 2 6; 1 6 5;
+                    2 3 7; 2 7 6; 3 0 4; 3 4 7
+                </Triangles>
+            </TriangleSetTopology>
+            <OglModel name="Visual" src="@visualMesh" color="0.8 0.5 0.2"/>
+            
+            <!-- Vinculación de la malla visual con el objeto mecánico -->
+            <BarycentricMapping input="@../dofs" output="@Visual"/>
+        </Node>
+    </Node>
+</Node>
+
